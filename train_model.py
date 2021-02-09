@@ -22,21 +22,23 @@ import warnings
 warnings.filterwarnings('ignore')
 
 # initialize the initial learning rate, number of epochs to train for, and batch size
-INIT_LR = 1e-4
+INIT_LR = 1e-5
+
 # Number of passes of the entire training dataset the ML algo has completed
 # If the bactch size is the whole dataset then number of EPOCHS is the number of iterations
-EPOCHS = 20
+EPOCHS = 22
+
 # Datasets are usually grouped into batches especially when the datasets are very larg
-BATCH_SIZ = 42
+BATCH_SIZ = 30
 # Explanation on EPOCHS and BATCH_SIZ:
-# The general relation where dataset size is d,
+# The genera l relation where dataset size is d,
 # number of epochs is e,
 # number of iteration is i
 # and batch size is b
 # would be d*e=i*b
 
 
-DIRECTORY = r"E:\Face-Mask-Detection\dataset"
+DIRECTORY = r"F:\Face-Mask-Detection\dataset"
 CATEGORIES = ["with_mask", "without_mask"]
 
 # grab the list of images in our dataset directory, then initialize
@@ -86,7 +88,6 @@ headModel = Dense(2, activation="softmax")(headModel)
 # place the head FC model on top of the base model (this will become
 # the actual model we will train)
 model = Model(inputs=baseModel.input, outputs=headModel)
-
 # loop over all layers in the base model and freeze them so they will
 # *not* be updated during the first training process
 for layer in baseModel.layers:
@@ -99,6 +100,7 @@ model.compile(loss="binary_crossentropy", optimizer=opt,
               metrics=["accuracy"])
 
 # construct the training image generator for data augmentation
+print("[INFO] generating images by changing its properties...")
 Img_Gen = ImageDataGenerator(
     rotation_range=25,
     zoom_range=0.25,
@@ -111,14 +113,14 @@ Img_Gen = ImageDataGenerator(
 # train the head of the network
 print("[INFO] training head...")
 H = model.fit(
-    img_Gen.flow(trainX, trainY, batch_size=BATCH_SIZ),
+    Img_Gen.flow(trainX, trainY, batch_size=BATCH_SIZ),
     steps_per_epoch=len(trainX) // BATCH_SIZ,
     validation_data=(testX, testY),
     validation_steps=len(testX) // BATCH_SIZ,
     epochs=EPOCHS)
 
 # make predictions on the testing set
-print("[INFO] evaluating network...")
+print("[INFO] predicting model...")
 predIdxs = model.predict(testX, batch_size=BATCH_SIZ)
 
 # for each image in the testing set we need to find the index of the
@@ -136,13 +138,15 @@ model.save("mask_detector.model", save_format="h5")
 # plot the training loss and accuracy
 N = EPOCHS
 plt.style.use("ggplot")
-plt.figure(figsize=(12,8)
+plt.figure(figsize=(12,8))
 plt.plot(np.arange(0, N), H.history["loss"], label="train_loss")
 plt.plot(np.arange(0, N), H.history["val_loss"], label="val_loss")
-plt.plot(np.arange(0, N), H.history["accuracy"], label="train_acc")
-plt.plot(np.arange(0, N), H.history["val_accuracy"], label="val_acc")
+plt.plot(np.arange(0, N), H.history["acc"], label="train_acc")
+plt.plot(np.arange(0, N), H.history["val_acc"], label="val_acc")
 plt.title("Training Loss and Accuracy")
 plt.xlabel("Epochs...")
 plt.ylabel("Loss/Accuracy")
 plt.legend(loc="center right")
 plt.savefig("accuracy plot.png")
+
+
