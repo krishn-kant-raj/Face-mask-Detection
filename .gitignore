@@ -1,9 +1,9 @@
 \venv
+\without_mask_detected
 dataset/with_mask
 dataset/without_mask
 \.idea
 \.ipynb_checkpoints
-\practice file
 *.pptx
 *.pdf
 *.docx
