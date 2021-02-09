@@ -7,8 +7,10 @@ import numpy as np
 import imutils
 import cv2
 import os
-import pyttsx3
 import winsound
+import warnings
+warnings.filterwarnings('ignore')
+from datetime import datetime
 
 #  Remove  the Error: Your CPU supports instructions that this TensorFlow
 #                           binary was not compiled to use: AVX AVX2
@@ -18,7 +20,7 @@ def detect_and_predict_mask(frame, faceNet, maskNet):
     # grab the dimensions of the frame and then construct a blob
     # from it
     (h, w) = frame.shape[:2]
-    blob = cv2.dnn.blobFromImage(frame, 1.0, (100, 100),(104.0, 177.0, 123.0))
+    blob = cv2.dnn.blobFromImage(frame, 1.0, (100, 100), (104.0, 177.0, 123.0))
 
     # pass the blob through the network and obtain the face detections
     faceNet.setInput(blob)
@@ -69,7 +71,7 @@ def detect_and_predict_mask(frame, faceNet, maskNet):
         # faces at the same time rather than one-by-one predictions
         # in the above `for` loop
         faces = np.array(faces, dtype="float32")
-        preds = maskNet.predict(faces, batch_size=42)
+        preds = maskNet.predict(faces, batch_size=30)
 
     # return a 2-tuple of the face locations and their corresponding
     # locations
@@ -89,10 +91,11 @@ vs = VideoStream(src=0).start()
 
 # loop over the frames from the video stream
 while True:
+    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     # grab the frame from the threaded video stream and resize it
     # to have a maximum width of 400 pixels
     frame = vs.read()
-    frame = imutils.resize(frame, width=900)
+    frame = imutils.resize(frame, width=600)
 
     # detect faces in the frame and determine if they are wearing a
     # face mask or not
@@ -110,8 +113,10 @@ while True:
         if mask > withoutMask:
             label = "Mask"
         else:
-            label = "No Mask"
+            label = "Wear Mask"
             winsound.PlaySound('alert.wav', winsound.SND_LOOP)
+            file_path = "F:/Face-Mask-Detection/without_mask_detected/"
+            cv2.imwrite(file_path+str(now.replace(':','-'))+".jpg", frame)
 
         color = (0, 255, 0) if label == "Mask" else (0, 0, 255)
 
@@ -123,9 +128,11 @@ while True:
         cv2.putText(frame, label, (startX, startY - 10),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.45, color, 2)
         cv2.rectangle(frame, (startX, startY), (endX, endY), color, 2)
-
+    cv2.putText(frame, "Press 'e' to Exit", (10, 430), cv2.FONT_HERSHEY_COMPLEX_SMALL, .75, (13, 204, 253), 1)
+    # Put current DateTime on each frame
+    cv2.putText(frame, str(now), (150, 40), cv2.FONT_HERSHEY_SIMPLEX, .75, (255, 255, 255), 1, cv2.LINE_AA)
     # show the output frame
-    cv2.imshow("Frame", frame)
+    cv2.imshow("Mask Detector", frame)
     # Capture video after each 1 milliseconds
     key = cv2.waitKey(1)
 
